@@ -9,6 +9,8 @@ public class PlayerCameraController : MonoBehaviour {
 	public float Pitch = 0.0f;
 	public float Yaw = 0.0f;
 
+	private bool IsCursorLocked = true;
+
 	void Start() {
 
 	}
@@ -16,7 +18,14 @@ public class PlayerCameraController : MonoBehaviour {
 	void Update() {
 
 		// LOCK CURSOR
-		Cursor.lockState = CursorLockMode.Locked;
+		if(Input.GetKeyDown(KeyCode.Tab)) {
+			IsCursorLocked = !IsCursorLocked;
+		}
+
+		if(IsCursorLocked)
+			Cursor.lockState = CursorLockMode.Locked;
+		else
+			Cursor.lockState = CursorLockMode.None;
 
 		// CAMERA MOVEMENT
 		float mouseX = Input.GetAxis("Mouse X");
