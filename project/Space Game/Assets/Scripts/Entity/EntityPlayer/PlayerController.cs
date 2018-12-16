@@ -2,29 +2,55 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour {
 
 	public float Speed = 25.0f;
 	public float JumpHeight = 5.0f;
 
+	private bool isMoving = true;
+
+	private Rigidbody rb;
+	private PlayerCameraController pcc;
+
 	void Start() {
+
+		rb = GetComponent<Rigidbody>();
+		pcc = GetComponent<PlayerCameraController>();
 
 	}
 
 	void Update() {
 
-		// MOVEMENT
-		var x = Input.GetAxis("Horizontal") * Time.deltaTime * Speed;
-		var z = Input.GetAxis("Vertical") * Time.deltaTime * Speed;
+		Vector3 velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
-		// JUMPING
-		var y = Input.GetAxis("Jump") * Time.deltaTime * JumpHeight;
+		float angle = Mathf.Deg2Rad * (-pcc.Yaw + 90.0f);
 
-		// MOVEMENT/JUMPING
-		transform.Translate(x, 0, 0);
-		transform.Translate(0, y, 0);
-		transform.Translate(0, 0, z);
+		// INPUT
+		if(Input.GetKey(KeyCode.W))
+			velocity += AngleToVec3(angle);
+		else if(Input.GetKey(KeyCode.S))
+			velocity -= AngleToVec3(angle);
+		if(Input.GetKey(KeyCode.A))
+			velocity += AngleToVec3(angle + 1.5708f);
+		else if(Input.GetKey(KeyCode.D))
+			velocity -= AngleToVec3(angle + 1.5708f);
 
+		if(isMoving) {
+
+			// UPDATE VELOCITY
+			rb.velocity = new Vector3(
+				velocity.x * Speed, 
+				rb.velocity.y, 
+				velocity.z * Speed
+			);
+
+		}
+
+	}
+
+	static Vector3 AngleToVec3(float angle) {
+		return new Vector3(Mathf.Cos(angle), 0.0f, Mathf.Sin(angle));
 	}
 
 }

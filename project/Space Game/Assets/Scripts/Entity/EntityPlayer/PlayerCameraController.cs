@@ -19,13 +19,13 @@ public class PlayerCameraController : MonoBehaviour {
 		Cursor.lockState = CursorLockMode.Locked;
 
 		// CAMERA MOVEMENT
-		var mouseX = Input.GetAxis("Mouse X");
-		var mouseY = Input.GetAxis("Mouse Y");
+		float mouseX = Input.GetAxis("Mouse X");
+		float mouseY = Input.GetAxis("Mouse Y");
 
 		Yaw += mouseX * Time.deltaTime * Sensitivity;
 		Pitch -= mouseY * Time.deltaTime * Sensitivity;
 
-		transform.eulerAngles = new Vector3(0.0f, Yaw, 0.0f);
+		//transform.eulerAngles = new Vector3(0.0f, Yaw, 0.0f);
 		transform.GetChild(0).eulerAngles = new Vector3(Pitch, Yaw, 0.0f);
 
 	}
