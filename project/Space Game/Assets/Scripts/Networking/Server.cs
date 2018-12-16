@@ -63,9 +63,16 @@ public class Server {
 		}
 	}
 
-	private void Broadcast(string str) {
+	private void Broadcast(byte[] buffer) {
 		foreach (int id in ClientIDs) {
-			SendToClient(id, str);
+			SendToClient(id, buffer);
+		}
+	}
+
+	private void BroadcastFrom(byte[] buffer, int sender) {
+		foreach (int id in ClientIDs) {
+			if(id != sender)
+				SendToClient(id, buffer);
 		}
 	}
 
@@ -94,13 +101,11 @@ public class Server {
 					msg = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
 					Debug.Log("player" + connectionID + " connected " + msg);
 					ConnectClient(connectionID);
-					SendToClient(connectionID, "chat:welcome player" + connectionID);
-					Broadcast("chat:Player" + connectionID + " has joined!");
 					break;
 
 				case NetworkEventType.DataEvent:
 					msg = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
-					proccessMsg(msg, connectionID);
+					proccessMsg(recBuffer, connectionID);
 					break;
 
 				case NetworkEventType.DisconnectEvent:
@@ -112,25 +117,34 @@ public class Server {
 		}
 	}
 
-	private void SendToClient(int connectionID, string str) {
-
-		byte[] buffer = Encoding.Unicode.GetBytes(str);
+	private void SendToClient(int connectionID, byte[] buffer) {
 
 		if (connectionID == hostConnectionID) {
 			hostBuffer = buffer;
 			m_controller.HostRecieveEvent(hostBuffer);
 		} else {
-			NetworkTransport.Send(m_hostID, connectionID, m_unrelChan, buffer, str.Length * sizeof(char), out m_error);
+			NetworkTransport.Send(m_hostID, connectionID, m_unrelChan, buffer, buffer.Length, out m_error);
 		}
 
 	}
 
 	public void HostRecieve(byte[] buffer) {
-		proccessMsg(Encoding.Unicode.GetString(buffer), 1);
+		proccessMsg(buffer, 1);
 	}
 
-	private void proccessMsg(string str, int id) {
-		Debug.Log("Server Recieved: " + str + " from player" + id);
+	private void proccessMsg(byte[] buffer, int id) {
+		Debug.Log("Server Recieved: " + buffer + " from player" + id);
+
+		switch (buffer[0]) {
+			case (byte)NetType.Translation:
+			case (byte)NetType.Rotation:
+			case (byte)NetType.Scale:
+				if (id == 1) {
+					BroadcastFrom(buffer, id);
+				}
+				break;
+		}
+
 	}
 
 	public void Stop() {

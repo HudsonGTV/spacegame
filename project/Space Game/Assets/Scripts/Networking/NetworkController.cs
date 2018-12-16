@@ -4,8 +4,16 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Threading;
 using System.Text;
+using System;
 
 public class NetworkController : MonoBehaviour {
+
+	public static List<NetworkIdentity> ids = new List<NetworkIdentity>();
+
+	public static void AddID(NetworkIdentity id) {
+		id.id = id.gameObject.GetInstanceID();
+		ids.Add(id);
+	}
 
 	public int m_port = 7777;
 
@@ -35,6 +43,8 @@ public class NetworkController : MonoBehaviour {
 
 	private void Start() {
 
+		Net.networkController = this;
+
 		server = new Server();
 
 		NetworkTransport.Init();
@@ -44,8 +54,8 @@ public class NetworkController : MonoBehaviour {
 		HostTopology hostT = new HostTopology(cc, max_connections);
 		hostID = NetworkTransport.AddHost(hostT, 0);
 
-		//StartHost();
-		StartClient("127.0.0.1", m_port);
+		StartHost();
+		//StartClient("127.0.0.1", m_port);
 
 	}
 
@@ -61,8 +71,22 @@ public class NetworkController : MonoBehaviour {
 
 	}
 
-	private void processMsg(string msg) {
-		Debug.Log("Client Recieved: " + msg);
+	private void processMsg(byte[] buffer) {
+		Debug.Log("Client Recieved: " + buffer);
+
+		switch (buffer[0]) {
+			case (byte)NetType.Translation:
+			case (byte)NetType.Rotation:
+			case (byte)NetType.Scale:
+				for (int i = 0; i < ids.Count; ++i) {
+					if (ids[i].id == BitConverter.ToInt32(buffer, 1)) {
+						ids[i].queue.Add(buffer);
+						break;
+					}
+				}
+				break;
+		}
+
 	}
 
 	public void StartHost() {
@@ -110,12 +134,26 @@ public class NetworkController : MonoBehaviour {
 		StopClient();
 	}
 
-	private void sendString(string str) {
+	public void sendString(string str) {
+
+		byte[] strbytes = Encoding.Unicode.GetBytes(str);
+		byte[] buffer = new byte[strbytes.Length];
+		Array.Copy(strbytes, 0, buffer, 1, strbytes.Length);
+
+		buffer[0] = (byte)NetType.Chat;
+
 		if (Host) {
-			server.HostRecieve(Encoding.Unicode.GetBytes(str));
+			server.HostRecieve(buffer);
 		} else {
-			byte[] buffer = Encoding.Unicode.GetBytes(str);
-			NetworkTransport.Send(hostID, connectionID, unrelChan, buffer, str.Length * sizeof(char), out error);
+			NetworkTransport.Send(hostID, connectionID, unrelChan, buffer, buffer.Length * sizeof(byte), out error);
+		}
+	}
+
+	public void sendBytes(byte[] buffer) {
+		if (Host) {
+			server.HostRecieve(buffer);
+		} else {
+			NetworkTransport.Send(hostID, connectionID, unrelChan, buffer, buffer.Length * sizeof(byte), out error);
 		}
 	}
 
@@ -137,7 +175,7 @@ public class NetworkController : MonoBehaviour {
 				if (!Host && connectionID == this.connectionID) {
 					string msg = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
 					message = msg;
-					processMsg(msg);
+					processMsg(recBuffer);
 				}
 				break;
 			case NetworkEventType.ConnectEvent:
@@ -152,7 +190,7 @@ public class NetworkController : MonoBehaviour {
 
 	public void HostRecieveEvent(byte[] buffer) {
 		string msg = Encoding.Unicode.GetString(buffer);
-		processMsg(msg);
+		processMsg(buffer);
 	}
 
 }
