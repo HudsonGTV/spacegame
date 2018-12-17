@@ -6,19 +6,31 @@ using System.Threading;
 using System.Text;
 using System;
 
+[RequireComponent(typeof(NetworkedInput))]
 public class NetworkController : MonoBehaviour {
 
 	public static List<NetworkIdentity> ids = new List<NetworkIdentity>();
 
+	public GameObject PlayerPrefab;
+
 	public static void AddID(NetworkIdentity id) {
-		id.id = id.gameObject.GetInstanceID();
-		ids.Add(id);
+		if (!ids.Contains(id)) {
+			for (int i = 1; i < int.MaxValue; ++i) {
+				if (!idsContains(i)) {
+					id.id = i;
+					break;
+				}
+			}
+			ids.Add(id);
+		}
 	}
 
 	public int m_port = 7777;
 
 	private bool ServerConnected = false;
 	private bool ClientConnected = false;
+
+	private bool ConnectionConfirmed = false;
 
 	private Thread ServerThread;
 
@@ -72,7 +84,11 @@ public class NetworkController : MonoBehaviour {
 	}
 
 	private void processMsg(byte[] buffer) {
-		Debug.Log("Client Recieved: " + buffer);
+
+		if (!ConnectionConfirmed) {
+			ConnectionConfirmed = true;
+			ConnectedToServer();
+		}
 
 		switch (buffer[0]) {
 			case (byte)NetType.Translation:
@@ -81,10 +97,46 @@ public class NetworkController : MonoBehaviour {
 				for (int i = 0; i < ids.Count; ++i) {
 					if (ids[i].id == BitConverter.ToInt32(buffer, 1)) {
 						ids[i].queue.Add(buffer);
-						break;
+						return;
 					}
 				}
-				break;
+				//object not found, instantiate
+
+				byte[] strbuf = new byte[buffer.Length - (sizeof(int) + 1 + (sizeof(float) * 3))];
+
+				Array.Copy(buffer, sizeof(int) + 1 + (sizeof(float) * 3), strbuf, 0, strbuf.Length);
+
+				GameObject netObj = (GameObject)Instantiate(Resources.Load(Encoding.Unicode.GetString(strbuf)));
+				netObj.GetComponent<NetworkIdentity>().id = BitConverter.ToInt32(buffer, 1);
+				netObj.GetComponent<NetworkIdentity>().queue.Add(buffer);
+				return;
+			case (byte)NetType.Sync:
+				for (int i = 0; i < ids.Count; ++i) {
+					if (ids[i].id == BitConverter.ToInt32(buffer, 1 + sizeof(int))) {
+						ids[i].player = true;
+						ids[i].plyerID = BitConverter.ToInt32(buffer, 1);
+						return;
+					}
+				}
+				//object not found, instantiate
+
+				GameObject nPlayer = Instantiate(PlayerPrefab);
+
+				float x = BitConverter.ToSingle(buffer, 1 + (sizeof(int) * 2) + (sizeof(float) * 0));
+				float y = BitConverter.ToSingle(buffer, 1 + (sizeof(int) * 2) + (sizeof(float) * 1));
+				float z = BitConverter.ToSingle(buffer, 1 + (sizeof(int) * 2) + (sizeof(float) * 2));
+
+				nPlayer.transform.position = new Vector3(x, y, z);
+
+				NetworkIdentity nPlayerNetID = nPlayer.GetComponent<NetworkIdentity>();
+
+				nPlayerNetID.id = BitConverter.ToInt32(buffer, 1 + sizeof(int));
+				nPlayerNetID.player = true;
+				nPlayerNetID.plyerID = BitConverter.ToInt32(buffer, 1);
+				return;
+			case (byte)NetType.Control:
+				Net.networkInput.queue.Add(buffer);
+				return;
 		}
 
 	}
@@ -108,9 +160,8 @@ public class NetworkController : MonoBehaviour {
 
 	public bool StartClient(string ip, int port) {
 		if (!ClientConnected) {
+			Debug.Log("Connecting to server: " + hostID + " " + ip + " " + port);
 			connectionID = NetworkTransport.Connect(hostID, ip, port, 0, out error);
-			Debug.Log("Connected to server: " + hostID + " " + ip + " " + port + " with id of: " + connectionID);
-			Debug.Log(error);
 			ClientConnected = true;
 			return true;
 		}
@@ -118,8 +169,34 @@ public class NetworkController : MonoBehaviour {
 	}
 
 	void ConnectedToServer() {
-		//send welcome message
-		sendString("chat:player says hello");
+
+		Debug.Log("Connected to server: " + hostID + " with id of: " + connectionID);
+
+		//create player object
+		GameObject nPlayer = Instantiate(PlayerPrefab);
+
+		NetworkIdentity nPlayerNetID = nPlayer.GetComponent<NetworkIdentity>();
+
+		nPlayerNetID.player = true;
+		nPlayerNetID.MyPlayer = true;
+		for (int i = 1; i < int.MaxValue; ++i) {
+			if (!idsContains(i)) {
+				nPlayerNetID.id = i;
+				break;
+			}
+		}
+
+		nPlayer.transform.position = new Vector3(0,0,0);
+
+	}
+
+	private static bool idsContains(int id) {
+		for (int i = 0; i < ids.Count; ++i) {
+			if (ids[i].id == id) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void StopClient() {
@@ -179,11 +256,9 @@ public class NetworkController : MonoBehaviour {
 				}
 				break;
 			case NetworkEventType.ConnectEvent:
-				if (connectionID == this.connectionID) {
-					ConnectedToServer();
-				}
-				Debug.Log(connectionID);
-				Debug.Log(this.connectionID);
+				//if (connectionID == this.connectionID) {
+					//ConnectedToServer();
+				//}
 				break;
 		}
 	}

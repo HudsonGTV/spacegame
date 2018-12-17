@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(NetworkIdentity))]
+[RequireComponent(typeof(PlayerCameraController))]
 public class PlayerController : MonoBehaviour {
 
 	public float Speed = 25.0f;
@@ -12,11 +14,14 @@ public class PlayerController : MonoBehaviour {
 
 	private Rigidbody rb;
 	private PlayerCameraController pcc;
+	private NetworkIdentity netIdent;
+
 
 	void Start() {
 
 		rb = GetComponent<Rigidbody>();
 		pcc = GetComponent<PlayerCameraController>();
+		netIdent = GetComponent<NetworkIdentity>();
 
 	}
 
@@ -27,13 +32,13 @@ public class PlayerController : MonoBehaviour {
 		float angle = Mathf.Deg2Rad * (-pcc.Yaw + 90.0f);
 
 		// INPUT
-		if(Input.GetKey(KeyCode.W))
+		if(Net.networkInput.NetworkedKeyDown(InputType.forward, netIdent.MyPlayer, netIdent.plyerID))
 			velocity += AngleToVec3(angle);
-		else if(Input.GetKey(KeyCode.S))
+		if(Net.networkInput.NetworkedKeyDown(InputType.backward, netIdent.MyPlayer, netIdent.plyerID))
 			velocity -= AngleToVec3(angle);
-		if(Input.GetKey(KeyCode.A))
+		if(Net.networkInput.NetworkedKeyDown(InputType.left, netIdent.MyPlayer, netIdent.plyerID))
 			velocity += AngleToVec3(angle + 1.5708f);
-		else if(Input.GetKey(KeyCode.D))
+		if(Net.networkInput.NetworkedKeyDown(InputType.right, netIdent.MyPlayer, netIdent.plyerID))
 			velocity -= AngleToVec3(angle + 1.5708f);
 
 		if(isMoving) {

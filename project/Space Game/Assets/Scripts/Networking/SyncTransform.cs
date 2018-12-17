@@ -30,17 +30,18 @@ public class SyncTransform : MonoBehaviour {
 		counter += Time.deltaTime;
 
 		if (counter >= 1 / ups) {
+			counter = 0;
 			//send
 			if (position) {
-				Net.SendTransform(NetType.Translation, ident.id, transform.position);
+				Net.SendTransform(NetType.Translation, ident.id, transform.position, gameObject.name);
 			}
 
 			if (rotation) {
-				Net.SendTransform(NetType.Rotation, ident.id, transform.eulerAngles);
+				Net.SendTransform(NetType.Rotation, ident.id, transform.eulerAngles, gameObject.name);
 			}
 
 			if (scale) {
-				Net.SendTransform(NetType.Scale, ident.id, transform.localScale);
+				Net.SendTransform(NetType.Scale, ident.id, transform.localScale, gameObject.name);
 			}
 		}
 

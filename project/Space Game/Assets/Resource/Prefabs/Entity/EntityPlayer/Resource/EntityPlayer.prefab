@@ -190,6 +190,8 @@ GameObject:
   - component: {fileID: 7326052093534901437}
   - component: {fileID: 7326052093534901435}
   - component: {fileID: 7326052093534901438}
+  - component: {fileID: 5004465582033318716}
+  - component: {fileID: 2759784572485933375}
   m_Layer: 0
   m_Name: EntityPlayer
   m_TagString: Untagged
@@ -328,3 +330,37 @@ MonoBehaviour:
   Sensitivity: 100
   Pitch: 0
   Yaw: 0
+--- !u!114 &5004465582033318716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7326052093534901430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f521e948c00bd345a6a7cc47848ebd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: 0
+  plyerID: 0
+  MyPlayer: 0
+  id: 0
+  syncPS: 5
+--- !u!114 &2759784572485933375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7326052093534901430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0938f824dce5f9a4dbdcd14f652b42ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  position: 1
+  rotation: 1
+  scale: 0
+  ups: 10
+  Importance: 5

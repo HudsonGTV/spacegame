@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Text;
+using System;
 
 public class Server {
 
@@ -133,7 +134,6 @@ public class Server {
 	}
 
 	private void proccessMsg(byte[] buffer, int id) {
-		Debug.Log("Server Recieved: " + buffer + " from player" + id);
 
 		switch (buffer[0]) {
 			case (byte)NetType.Translation:
@@ -142,6 +142,16 @@ public class Server {
 				if (id == 1) {
 					BroadcastFrom(buffer, id);
 				}
+				break;
+			case (byte)NetType.Control:
+				byte[] idbuf = BitConverter.GetBytes(id);
+				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
+				SendToClient(1, buffer);
+				break;
+			case (byte)NetType.Sync:
+				idbuf = BitConverter.GetBytes(id);
+				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
+				BroadcastFrom(buffer, id);
 				break;
 		}
 
