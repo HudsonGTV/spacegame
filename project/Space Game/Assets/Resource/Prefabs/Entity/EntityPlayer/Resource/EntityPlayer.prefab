@@ -345,7 +345,7 @@ MonoBehaviour:
   player: 0
   plyerID: 0
   MyPlayer: 0
-  id: 0
+  id: -1
   syncPS: 5
 --- !u!114 &2759784572485933375
 MonoBehaviour:

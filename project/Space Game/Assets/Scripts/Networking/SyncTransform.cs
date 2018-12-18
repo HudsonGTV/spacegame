@@ -27,27 +27,30 @@ public class SyncTransform : MonoBehaviour {
 	
 	void FixedUpdate() {
 
-		counter += Time.deltaTime;
+		if (ident.active()) {
 
-		if (counter >= 1 / ups) {
-			counter = 0;
-			//send
-			if (position) {
-				Net.SendTransform(NetType.Translation, ident.id, transform.position, gameObject.name);
+			counter += Time.deltaTime;
+
+			if (counter >= 1 / ups) {
+				counter = 0;
+				//send
+				if (position) {
+					Net.SendTransform(NetType.Translation, ident.id, transform.position, gameObject.name);
+				}
+
+				if (rotation) {
+					Net.SendTransform(NetType.Rotation, ident.id, transform.eulerAngles, gameObject.name);
+				}
+
+				if (scale) {
+					Net.SendTransform(NetType.Scale, ident.id, transform.localScale, gameObject.name);
+				}
 			}
 
-			if (rotation) {
-				Net.SendTransform(NetType.Rotation, ident.id, transform.eulerAngles, gameObject.name);
+			//recieve
+			for (int i = 0; i < Importance; ++i) {
+				process();
 			}
-
-			if (scale) {
-				Net.SendTransform(NetType.Scale, ident.id, transform.localScale, gameObject.name);
-			}
-		}
-
-		//recieve
-		for (int i = 0; i < Importance; ++i) {
-			process();
 		}
 
 	}

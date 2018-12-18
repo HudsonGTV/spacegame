@@ -8,7 +8,11 @@ public class NetworkIdentity : MonoBehaviour {
 	public bool player = false;
 	public int plyerID = 0;
 	public bool MyPlayer = false;
-	public int id;
+	public int id = -1;
+
+	public bool active() {
+		return id != -1;
+	}
 
 	public List<byte[]> queue = new List<byte[]>();
 
@@ -22,7 +26,7 @@ public class NetworkIdentity : MonoBehaviour {
 	}
 	
 	void Update() {
-		if (MyPlayer) {
+		if (MyPlayer && active()) {
 			counter += Time.deltaTime;
 
 			if (counter >= 1 / syncPS) {

@@ -18,9 +18,14 @@ public class Server {
 	private byte m_error;
 	private byte[] hostBuffer = new byte[1024];
 	private int hostConnectionID = 1;
+	private int ID = 1;
 	NetworkController m_controller;
 
 	private List<int> ClientIDs;
+
+	private int GetNewID() {
+		return ID++;
+	}
 
 	public byte[] getHostBuffer() {
 		return hostBuffer;
@@ -102,6 +107,9 @@ public class Server {
 					msg = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
 					Debug.Log("player" + connectionID + " connected " + msg);
 					ConnectClient(connectionID);
+					byte[] buffer = new byte[1];
+					buffer[0] = (byte)NetType.hello;
+					SendToClientRel(connectionID, buffer);
 					break;
 
 				case NetworkEventType.DataEvent:
@@ -129,6 +137,17 @@ public class Server {
 
 	}
 
+	private void SendToClientRel(int connectionID, byte[] buffer) {
+
+		if (connectionID == hostConnectionID) {
+			hostBuffer = buffer;
+			m_controller.HostRecieveEvent(hostBuffer);
+		} else {
+			NetworkTransport.Send(m_hostID, connectionID, m_relChan, buffer, buffer.Length, out m_error);
+		}
+
+	}
+
 	public void HostRecieve(byte[] buffer) {
 		proccessMsg(buffer, 1);
 	}
@@ -152,6 +171,13 @@ public class Server {
 				idbuf = BitConverter.GetBytes(id);
 				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
 				BroadcastFrom(buffer, id);
+				break;
+			case (byte)NetType.RequestID:
+				int newID = GetNewID();
+				idbuf = BitConverter.GetBytes(newID);
+				Debug.Log("id requested from: player" + id + " sending new id: " + newID);
+				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
+				SendToClientRel(id, buffer);
 				break;
 		}
 

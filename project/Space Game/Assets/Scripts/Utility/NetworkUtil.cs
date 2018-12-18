@@ -10,7 +10,9 @@ public enum NetType : byte {
 	Rotation,
 	Scale,
 	Sync,
-	Control
+	Control,
+	RequestID,
+	hello
 }
 
 public class Net {
@@ -25,11 +27,11 @@ public class Net {
 
 	public static bool SendTransform(NetType type, int id, float x, float y, float z, string name) {
 		byte[] buffer = new byte[1 + (sizeof(float) * 3) + sizeof(int) + (name.Length * sizeof(char))];
-		byte[] bufid = BitConverter.GetBytes(id);
-		byte[] bufx = BitConverter.GetBytes(x);
-		byte[] bufy = BitConverter.GetBytes(y);
-		byte[] bufz = BitConverter.GetBytes(z);
-		byte[] bname = Encoding.Unicode.GetBytes(name);
+		byte[] bufid  = BitConverter.GetBytes(id);
+		byte[] bufx   = BitConverter.GetBytes(x);
+		byte[] bufy   = BitConverter.GetBytes(y);
+		byte[] bufz   = BitConverter.GetBytes(z);
+		byte[] bname  = Encoding.Unicode.GetBytes(name);
 
 		Array.Copy(bufid, 0, buffer, 1,                                     bufid.Length);
 		Array.Copy(bufx , 0, buffer, sizeof(int) + 1,                       bufx.Length );
@@ -46,6 +48,13 @@ public class Net {
 
 	public static bool SendTransform(NetType type, int id, Vector3 vec, string name) {
 		return SendTransform(type, id, vec.x, vec.y, vec.z, name);
+	}
+
+	public static void RequestNewID() {
+		Debug.Log("Requesting new id");
+		byte[] buffer = new byte[1+sizeof(int)];
+		buffer[0] = (byte)NetType.RequestID;
+		networkController.sendBytesRel(buffer);
 	}
 
 }

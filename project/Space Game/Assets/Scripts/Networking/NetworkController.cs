@@ -14,15 +14,8 @@ public class NetworkController : MonoBehaviour {
 	public GameObject PlayerPrefab;
 
 	public static void AddID(NetworkIdentity id) {
-		if (!ids.Contains(id)) {
-			for (int i = 1; i < int.MaxValue; ++i) {
-				if (!idsContains(i)) {
-					id.id = i;
-					break;
-				}
-			}
-			ids.Add(id);
-		}
+		ids.Add(id);
+		Net.RequestNewID();
 	}
 
 	public int m_port = 7777;
@@ -66,8 +59,8 @@ public class NetworkController : MonoBehaviour {
 		HostTopology hostT = new HostTopology(cc, max_connections);
 		hostID = NetworkTransport.AddHost(hostT, 0);
 
-		StartHost();
-		//StartClient("127.0.0.1", m_port);
+		//StartHost();
+		StartClient("127.0.0.1", m_port);
 
 	}
 
@@ -83,6 +76,18 @@ public class NetworkController : MonoBehaviour {
 
 	}
 
+	private void assignID(int id) {
+		Debug.Log("id: " + id + " recieved, looking for id-less object");
+		Debug.Log(ids.Count);
+		for (int i = 0; i < ids.Count; ++i) {
+			if (ids[i].id == -1) {
+				Debug.Log("id-less object found!");
+				ids[i].id = id;
+				return;
+			}
+		}
+	}
+
 	private void processMsg(byte[] buffer) {
 
 		if (!ConnectionConfirmed) {
@@ -94,6 +99,9 @@ public class NetworkController : MonoBehaviour {
 			case (byte)NetType.Translation:
 			case (byte)NetType.Rotation:
 			case (byte)NetType.Scale:
+				if (BitConverter.ToInt32(buffer, 1) < 1) {
+					return;
+				}
 				for (int i = 0; i < ids.Count; ++i) {
 					if (ids[i].id == BitConverter.ToInt32(buffer, 1)) {
 						ids[i].queue.Add(buffer);
@@ -111,6 +119,9 @@ public class NetworkController : MonoBehaviour {
 				netObj.GetComponent<NetworkIdentity>().queue.Add(buffer);
 				return;
 			case (byte)NetType.Sync:
+				if (BitConverter.ToInt32(buffer, 1 + sizeof(int)) < 1) {
+					return;
+				}
 				for (int i = 0; i < ids.Count; ++i) {
 					if (ids[i].id == BitConverter.ToInt32(buffer, 1 + sizeof(int))) {
 						ids[i].player = true;
@@ -119,6 +130,8 @@ public class NetworkController : MonoBehaviour {
 					}
 				}
 				//object not found, instantiate
+
+				Debug.Log("new player detected, adding");
 
 				GameObject nPlayer = Instantiate(PlayerPrefab);
 
@@ -136,6 +149,9 @@ public class NetworkController : MonoBehaviour {
 				return;
 			case (byte)NetType.Control:
 				Net.networkInput.queue.Add(buffer);
+				return;
+			case (byte)NetType.RequestID:
+				assignID(BitConverter.ToInt32(buffer, 1));
 				return;
 		}
 
@@ -179,12 +195,8 @@ public class NetworkController : MonoBehaviour {
 
 		nPlayerNetID.player = true;
 		nPlayerNetID.MyPlayer = true;
-		for (int i = 1; i < int.MaxValue; ++i) {
-			if (!idsContains(i)) {
-				nPlayerNetID.id = i;
-				break;
-			}
-		}
+
+		AddID(nPlayerNetID);
 
 		nPlayer.transform.position = new Vector3(0,0,0);
 
@@ -231,6 +243,14 @@ public class NetworkController : MonoBehaviour {
 			server.HostRecieve(buffer);
 		} else {
 			NetworkTransport.Send(hostID, connectionID, unrelChan, buffer, buffer.Length * sizeof(byte), out error);
+		}
+	}
+
+	public void sendBytesRel(byte[] buffer) {
+		if (Host) {
+			server.HostRecieve(buffer);
+		} else {
+			NetworkTransport.Send(hostID, connectionID, relChan, buffer, buffer.Length * sizeof(byte), out error);
 		}
 	}
 
