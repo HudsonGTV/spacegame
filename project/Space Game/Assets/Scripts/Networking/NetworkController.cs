@@ -59,8 +59,10 @@ public class NetworkController : MonoBehaviour {
 		HostTopology hostT = new HostTopology(cc, max_connections);
 		hostID = NetworkTransport.AddHost(hostT, 0);
 
-		//StartHost();
-		StartClient("127.0.0.1", m_port);
+		StartHost();
+		//StartClient("127.0.0.1", m_port);
+
+		
 
 	}
 
@@ -99,6 +101,9 @@ public class NetworkController : MonoBehaviour {
 			case (byte)NetType.Translation:
 			case (byte)NetType.Rotation:
 			case (byte)NetType.Scale:
+			case (byte)NetType.TranslationLoc:
+			case (byte)NetType.RotationLoc:
+			case (byte)NetType.ScaleLoc:
 				if (BitConverter.ToInt32(buffer, 1) < 1) {
 					return;
 				}
@@ -110,13 +115,13 @@ public class NetworkController : MonoBehaviour {
 				}
 				//object not found, instantiate
 
-				byte[] strbuf = new byte[buffer.Length - (sizeof(int) + 1 + (sizeof(float) * 3))];
+				/*byte[] strbuf = new byte[buffer.Length - (sizeof(int) + 1 + (sizeof(float) * 3))];
 
 				Array.Copy(buffer, sizeof(int) + 1 + (sizeof(float) * 3), strbuf, 0, strbuf.Length);
 
 				GameObject netObj = (GameObject)Instantiate(Resources.Load(Encoding.Unicode.GetString(strbuf)));
 				netObj.GetComponent<NetworkIdentity>().id = BitConverter.ToInt32(buffer, 1);
-				netObj.GetComponent<NetworkIdentity>().queue.Add(buffer);
+				netObj.GetComponent<NetworkIdentity>().queue.Add(buffer);*/
 				return;
 			case (byte)NetType.Sync:
 				if (BitConverter.ToInt32(buffer, 1 + sizeof(int)) < 1) {
@@ -146,9 +151,6 @@ public class NetworkController : MonoBehaviour {
 				nPlayerNetID.id = BitConverter.ToInt32(buffer, 1 + sizeof(int));
 				nPlayerNetID.player = true;
 				nPlayerNetID.plyerID = BitConverter.ToInt32(buffer, 1);
-				return;
-			case (byte)NetType.Control:
-				Net.networkInput.queue.Add(buffer);
 				return;
 			case (byte)NetType.RequestID:
 				assignID(BitConverter.ToInt32(buffer, 1));

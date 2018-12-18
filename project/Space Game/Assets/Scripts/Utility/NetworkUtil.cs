@@ -9,8 +9,10 @@ public enum NetType : byte {
 	Translation,
 	Rotation,
 	Scale,
+	TranslationLoc,
+	RotationLoc,
+	ScaleLoc,
 	Sync,
-	Control,
 	RequestID,
 	hello
 }

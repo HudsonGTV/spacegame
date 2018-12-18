@@ -32,13 +32,13 @@ public class PlayerController : MonoBehaviour {
 		float angle = Mathf.Deg2Rad * (-pcc.Yaw + 90.0f);
 
 		// INPUT
-		if(Net.networkInput.NetworkedKeyDown(InputType.forward, netIdent.MyPlayer, netIdent.plyerID))
+		if(Net.networkInput.NetworkedKeyDown(InputType.forward, netIdent.MyPlayer))
 			velocity += AngleToVec3(angle);
-		if(Net.networkInput.NetworkedKeyDown(InputType.backward, netIdent.MyPlayer, netIdent.plyerID))
+		if(Net.networkInput.NetworkedKeyDown(InputType.backward, netIdent.MyPlayer))
 			velocity -= AngleToVec3(angle);
-		if(Net.networkInput.NetworkedKeyDown(InputType.left, netIdent.MyPlayer, netIdent.plyerID))
+		if(Net.networkInput.NetworkedKeyDown(InputType.left, netIdent.MyPlayer))
 			velocity += AngleToVec3(angle + 1.5708f);
-		if(Net.networkInput.NetworkedKeyDown(InputType.right, netIdent.MyPlayer, netIdent.plyerID))
+		if(Net.networkInput.NetworkedKeyDown(InputType.right, netIdent.MyPlayer))
 			velocity -= AngleToVec3(angle + 1.5708f);
 
 		if(isMoving) {

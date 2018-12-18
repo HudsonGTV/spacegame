@@ -162,13 +162,13 @@ public class Server {
 					BroadcastFrom(buffer, id);
 				}
 				break;
-			case (byte)NetType.Control:
-				byte[] idbuf = BitConverter.GetBytes(id);
-				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
-				SendToClient(1, buffer);
+			case (byte)NetType.TranslationLoc:
+			case (byte)NetType.RotationLoc:
+			case (byte)NetType.ScaleLoc:
+				BroadcastFrom(buffer, id);
 				break;
 			case (byte)NetType.Sync:
-				idbuf = BitConverter.GetBytes(id);
+				byte[] idbuf = BitConverter.GetBytes(id);
 				Array.Copy(idbuf, 0, buffer, 1, idbuf.Length);
 				BroadcastFrom(buffer, id);
 				break;
